@@ -6,7 +6,7 @@ on:
       - main  # Trigger this workflow only when code is pushed to the main branch
 
 env:
-  AWS_REGION: us-east-1                   # Set this to your preferred AWS region
+  AWS_REGION: us-east-2                   # Set this to your preferred AWS region
   ECR_REPOSITORY: financial-rag-engine    # Name of the ECR repository we will create
   ECS_SERVICE: financial-rag-service      # Name of the ECS Service we will create
   ECS_CLUSTER: financial-rag-cluster      # Name of the ECS Cluster we will create
