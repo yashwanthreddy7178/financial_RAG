@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial RAG — AI Research Copilot</title>
+    <meta name="description" content="Enterprise-grade RAG pipeline for financial document intelligence.">
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="app-container">
+
+    <!-- ─── SIDEBAR ──────────────────────────────────────────────────────────── -->
+    <aside class="sidebar glass">
+
+        <!-- Brand -->
+        <div class="brand">
+            <div class="brand-icon">📈</div>
+            <span class="brand-name">FinanceRAG</span>
+            <span class="brand-badge">LIVE</span>
+        </div>
+
+        <!-- Tab Nav -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="upload">💬 Chat</button>
+            <button class="tab-btn" data-tab="evaluate">📊 Evaluate</button>
+        </div>
+
+        <!-- ── CHAT TAB ────────────────────────────────────────────────────── -->
+        <div id="tab-upload" class="tab-content">
+            <div class="section-body">
+                <span class="section-label">Knowledge Base</span>
+
+                <div class="file-upload-wrapper">
+                    <input type="file" id="pdfUpload" accept=".pdf" class="file-input" multiple>
+                    <label for="pdfUpload" class="file-label">
+                        <span class="file-icon">📄</span>
+                        <span id="fileName" class="file-name">Click to select PDF(s)</span>
+                        <span class="file-hint">Supports multiple files · Max 50MB each</span>
+                    </label>
+                </div>
+
+                <button id="uploadBtn" class="btn-primary" disabled>⚡ Ingest Documents</button>
+                <div id="uploadStatus" class="status-msg hidden"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="section-body" style="margin-top:14px;">
+                <span class="section-label">Pipeline</span>
+
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div class="pipeline-step">
+                        <span class="ps-num">1</span>
+                        <div class="ps-body"><div class="ps-title">Query Expansion</div><div class="ps-sub">3 LLM variations</div></div>
+                    </div>
+                    <div class="pipeline-step">
+                        <span class="ps-num">2</span>
+                        <div class="ps-body"><div class="ps-title">Bi-Encoder Search</div><div class="ps-sub">40+ candidates pooled</div></div>
+                    </div>
+                    <div class="pipeline-step">
+                        <span class="ps-num">3</span>
+                        <div class="ps-body"><div class="ps-title">Cross-Encoder Re-rank</div><div class="ps-sub">Top 5 selected</div></div>
+                    </div>
+                    <div class="pipeline-step">
+                        <span class="ps-num">4</span>
+                        <div class="ps-body"><div class="ps-title">Self-RAG Grading</div><div class="ps-sub">Quality loop with retry</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── EVALUATE TAB ───────────────────────────────────────────────── -->
+        <div id="tab-evaluate" class="tab-content hidden">
+            <div class="section-body">
+                <span class="section-label">Test Cases</span>
+
+                <div class="eval-form">
+                    <div>
+                        <div class="field-label">Question</div>
+                        <input type="text" id="evalQuestion" class="eval-input" placeholder="e.g. What was total revenue in FY2025?">
+                    </div>
+                    <div>
+                        <div class="field-label">Ground Truth Answer</div>
+                        <textarea id="evalGroundTruth" class="eval-textarea" placeholder="The correct answer you expect..."></textarea>
+                    </div>
+                    <button id="addTestCaseBtn" class="btn-secondary">+ Add Test Case</button>
+                </div>
+
+                <div id="testCaseList" class="test-case-list"></div>
+
+                <button id="runEvalBtn" class="btn-primary" disabled>▶ Run Ragas Evaluation</button>
+                <div id="evalStatus" class="status-msg hidden"></div>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ─── MAIN AREA ─────────────────────────────────────────────────────────── -->
+    <main class="main-area">
+
+        <!-- ── CHAT VIEW ───────────────────────────────────────────────────── -->
+        <div id="chatView">
+            <header class="top-bar glass">
+                <h1>Financial Intelligence Copilot</h1>
+                <span class="pill">Advanced RAG</span>
+            </header>
+
+            <div id="chatBox" class="chat-box glass" style="flex:1;">
+                <div class="message ai-message">
+                    <div class="avatar">AI</div>
+                    <div class="msg-content">👋 Hello! Upload a 10-K, earnings transcript, or any financial PDF on the left — then ask me anything about it. I use a 4-stage retrieval pipeline to give you grounded, accurate answers.</div>
+                </div>
+            </div>
+
+            <div class="input-row glass">
+                <input type="text" id="questionInput" placeholder="Ask about revenue, risk factors, EBITDA, strategy…" autocomplete="off">
+                <button id="askBtn" class="send-btn">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── EVAL VIEW ───────────────────────────────────────────────────── -->
+        <div id="evalView" class="hidden">
+            <header class="top-bar glass">
+                <h1>Ragas Evaluation Dashboard</h1>
+                <span class="pill">Scientific Scoring</span>
+            </header>
+
+            <div id="evalDashboard" class="eval-main glass">
+                <div class="eval-empty">
+                    <div class="eval-empty-icon">📊</div>
+                    <p>Add test cases in the sidebar and click <strong>▶ Run Ragas Evaluation</strong> to score your pipeline scientifically.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<style>
+/* Pipeline steps — inline since they're sidebar-only extras */
+.pipeline-step {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px;
+    background: rgba(99,102,241,.05);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.ps-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--grad-accent);
+    color: #fff;
+    font-size: 0.65rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.ps-title { font-size: 0.78rem; font-weight: 600; color: var(--text-1); }
+.ps-sub   { font-size: 0.68rem; color: var(--text-3); margin-top: 1px; }
+</style>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
