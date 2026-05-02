@@ -11,7 +11,7 @@ env:
   ECS_SERVICE: financial-rag-service      # Name of the ECS Service we will create
   ECS_CLUSTER: financial-rag-cluster      # Name of the ECS Cluster we will create
   ECS_TASK_DEFINITION: .aws/task-def.json # Path to your task definition file (we will create this later)
-  CONTAINER_NAME: financial-rag-app       # Name of the container inside the task definition
+  CONTAINER_NAME: financial-rag-container       # Name of the container inside the task definition
 
 jobs:
   deploy:
@@ -48,18 +48,18 @@ jobs:
     # NOTE: The steps below require you to have set up ECS and created a task definition file.
     # Once your AWS infrastructure is set up, uncomment the steps below to enable fully automated deployments!
 
-    # - name: Fill in the new image ID in the Amazon ECS task definition
-    #   id: task-def
-    #   uses: aws-actions/amazon-ecs-render-task-definition@v1
-    #   with:
-    #     task-definition: ${{ env.ECS_TASK_DEFINITION }}
-    #     container-name: ${{ env.CONTAINER_NAME }}
-    #     image: ${{ steps.build-image.outputs.image }}
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: ${{ env.ECS_TASK_DEFINITION }}
+        container-name: ${{ env.CONTAINER_NAME }}
+        image: ${{ steps.build-image.outputs.image }}
 
-    # - name: Deploy Amazon ECS task definition
-    #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-    #   with:
-    #     task-definition: ${{ steps.task-def.outputs.task-definition }}
-    #     service: ${{ env.ECS_SERVICE }}
-    #     cluster: ${{ env.ECS_CLUSTER }}
-    #     wait-for-service-stability: true
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true
