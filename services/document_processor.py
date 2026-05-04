@@ -7,12 +7,12 @@ class DocumentProcessor:
         """
         We initialize our text splitter when the class is created.
         - chunk_size: The target length of each chunk (1000 characters).
-        - chunk_overlap: We overlap by 100 characters so we don't accidentally 
+        - chunk_overlap: We overlap by 200 characters so we don't accidentally 
           slice a crucial financial sentence in half!
         """
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
-            chunk_overlap=100,
+            chunk_overlap=200,
             # This tells LangChain to try splitting by Double Newlines (paragraphs) first, 
             # then Single Newlines, then Spaces. It respects grammar!
             separators=["\n\n", "\n", " ", ""] 
