@@ -1,4 +1,4 @@
-name: Deploy to AWS ECS
+﻿name: Deploy to AWS ECS
 
 on:
   push:
@@ -32,7 +32,12 @@ jobs:
         pip install -r requirements.txt
         
     - name: Run Pytest
-      # We run tests with coverage and fail if coverage is under 75%
+      # Dummy API keys let pydantic-settings initialise Settings() without error.
+      # Unit tests mock all external calls so no real credentials are used.
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-test-placeholder' }}
+        PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY || 'pcsk-test-placeholder' }}
+        PINECONE_INDEX_NAME: financial-rag
       run: |
         pytest tests/ -v --cov=services --cov=main --cov-fail-under=75
 

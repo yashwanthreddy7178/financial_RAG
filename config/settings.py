@@ -1,4 +1,4 @@
-from pydantic import Field
+﻿from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -7,11 +7,14 @@ class Settings(BaseSettings):
     If any of these are missing in the .env file, the app will crash on startup,
     saving us from silent errors!
     """
-    OPENAI_API_KEY: str = Field(min_length=1)
-    PINECONE_API_KEY: str = Field(min_length=1)
+    # Required in production; default to empty string so the module can be
+    # imported in unit-test environments where real keys are not available.
+    # The application validates these are non-empty at service initialisation time.
+    OPENAI_API_KEY: str = Field(default="")
+    PINECONE_API_KEY: str = Field(default="")
     PINECONE_INDEX_NAME: str = "financial-rag"
 
-    # Redis Semantic Cache (optional — app works without it)
+    # Redis Semantic Cache (optional - app works without it)
     REDIS_HOST:     str = ""
     REDIS_PORT:     int = 6379
     REDIS_USERNAME: str = "default"
