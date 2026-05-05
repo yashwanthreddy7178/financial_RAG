@@ -512,3 +512,102 @@ body {
 .s-ex { color: var(--green); }
 .s-gd { color: var(--amber); }
 .s-pr { color: var(--red); }
+
+/* ─── SOURCE PANEL ───────────────────────────────────────────────────────────── */
+.main-area { position: relative; overflow: hidden; }
+
+.source-panel {
+    position: absolute;
+    top: 12px;
+    right: -420px; /* Hidden off-screen by default */
+    bottom: 12px;
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 100;
+    box-shadow: -5px 0 25px rgba(0,0,0,0.3);
+}
+
+.source-panel.visible {
+    right: 12px;
+}
+
+.sp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(99,102,241,0.05);
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+}
+
+.sp-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sp-close {
+    background: transparent;
+    border: none;
+    color: var(--text-2);
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s var(--ease);
+}
+.sp-close:hover {
+    color: var(--red);
+}
+
+.sp-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+.sp-body::-webkit-scrollbar { width: 5px; }
+.sp-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 5px; }
+
+.sp-content {
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--text-1);
+    white-space: pre-wrap;
+}
+
+/* ─── INLINE CITATIONS ───────────────────────────────────────────────────────── */
+.citation-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid var(--border-bright);
+    color: var(--blue-lt);
+    border-radius: 4px;
+    padding: 0 5px;
+    margin: 0 2px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    vertical-align: super;
+    transition: all 0.2s var(--ease);
+    text-decoration: none;
+}
+
+.citation-badge:hover {
+    background: var(--grad-accent);
+    color: #fff;
+    border-color: transparent;
+    transform: translateY(-1px);
+    box-shadow: var(--glow-sm);
+}

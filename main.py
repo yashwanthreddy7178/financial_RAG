@@ -211,13 +211,14 @@ async def search_documents(request: Request, query: SearchQuery):
             question=query.question,
             conversation_history=query.conversation_history,
         )
-        return {"question": query.question, "answer": answer, "sources_used": 0}
+        return {"question": query.question, "answer": answer, "sources_used": 0, "sources": []}
 
     if route == "off_topic":
         return {
             "question": query.question,
             "answer": "I'm a specialized financial document assistant. I can only answer questions about uploaded financial reports. Please upload a document and ask me something relevant!",
             "sources_used": 0,
+            "sources": []
         }
 
     # ── Stage 1: Query Expansion (with pronoun resolution) ──────────────────
@@ -240,6 +241,7 @@ async def search_documents(request: Request, query: SearchQuery):
             "answer":      cached_answer,
             "sources_used": 0,
             "cache_hit":   True,
+            "sources":     []
         }
 
     # ── Stage 2: Embed all expanded queries for Pinecone search ───────────────
@@ -259,8 +261,8 @@ async def search_documents(request: Request, query: SearchQuery):
         candidate_chunks, seen_texts = [], set()
         for embedding in query_embeddings:
             for chunk in pinecone_svc.search_vectors(embedding, top_k=10):
-                if chunk not in seen_texts:
-                    seen_texts.add(chunk)
+                if chunk["text"] not in seen_texts:
+                    seen_texts.add(chunk["text"])
                     candidate_chunks.append(chunk)
 
         logger.info(f"Candidates pooled | count={len(candidate_chunks)}")
@@ -270,6 +272,7 @@ async def search_documents(request: Request, query: SearchQuery):
                 "question": query.question,
                 "answer": "I don't have any documents in my database to answer this.",
                 "sources_used": 0,
+                "sources": []
             }
 
         # Stage 4: Cross-Encoder Re-ranking
@@ -306,6 +309,7 @@ async def search_documents(request: Request, query: SearchQuery):
         "question": query.question,
         "answer": final_answer,
         "sources_used": len(final_chunks),
+        "sources": [{"id": i + 1, "filename": c["filename"], "text": c["text"]} for i, c in enumerate(final_chunks)]
     }
 
 
@@ -318,8 +322,8 @@ async def _run_rag_pipeline(question: str) -> tuple[str, list[str]]:
     candidate_chunks, seen_texts = [], set()
     for embedding in query_embeddings:
         for chunk in pinecone_svc.search_vectors(embedding, top_k=10):
-            if chunk not in seen_texts:
-                seen_texts.add(chunk)
+            if chunk["text"] not in seen_texts:
+                seen_texts.add(chunk["text"])
                 candidate_chunks.append(chunk)
 
     if not candidate_chunks:
@@ -329,7 +333,7 @@ async def _run_rag_pipeline(question: str) -> tuple[str, list[str]]:
     answer = await llm_svc.generate_answer(
         question=question, context_chunks=final_chunks, conversation_history=None
     )
-    return answer, final_chunks
+    return answer, [c["text"] for c in final_chunks]
 
 
 @app.post("/evaluate")

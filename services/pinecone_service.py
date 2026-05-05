@@ -67,10 +67,10 @@ class PineconeService:
             batch = vectors_to_upload[i:i + batch_size]
             self.index.upsert(vectors=batch)
 
-    def search_vectors(self, question_embedding: list[float], top_k: int = 5) -> list[str]:
+    def search_vectors(self, question_embedding: list[float], top_k: int = 5) -> list[dict]:
         """
         Searches the Pinecone database for the most mathematically similar vectors.
-        Returns the raw English text of the closest chunks.
+        Returns a list of dictionaries containing the chunk text, filename, and ID.
         """
         # We ask Pinecone to do the complex Cosine Similarity math for us!
         search_results = self.index.query(
@@ -80,10 +80,14 @@ class PineconeService:
         )
         
         # Pinecone returns a complex JSON object. We loop through the matches
-        # and extract the English text we saved inside the "metadata" payload earlier.
+        # and extract the English text and metadata we saved earlier.
         retrieved_chunks = []
         for match in search_results.matches:
-            chunk_text = match.metadata["text"]
-            retrieved_chunks.append(chunk_text)
+            chunk_data = {
+                "id": match.id,
+                "text": match.metadata["text"],
+                "filename": match.metadata.get("filename", "Unknown Source")
+            }
+            retrieved_chunks.append(chunk_data)
             
         return retrieved_chunks

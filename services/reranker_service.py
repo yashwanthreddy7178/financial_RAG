@@ -10,21 +10,25 @@ class RerankerService:
         # The very first time this runs, it will download a ~100MB model to your computer.
         self.ranker = Ranker(model_name="ms-marco-MiniLM-L-12-v2", cache_dir="flashrank_cache")
 
-    def rerank_chunks(self, query: str, chunks: list[str], top_k: int = 5) -> list[str]:
+    def rerank_chunks(self, query: str, chunks: list[dict], top_k: int = 5) -> list[dict]:
         """
         Takes the query and a large list of chunks (e.g., 20 chunks),
         uses the Cross-Encoder to deeply read them, and returns the top_k best chunks.
+        Expects chunks to be dictionaries containing at least 'id' and 'text'.
         """
         if not chunks:
             return []
             
         # FlashRank expects the data in a specific dictionary format
         passages = []
+        # Create a lookup table to recover the original dictionaries
+        chunk_lookup = {}
         for i, chunk in enumerate(chunks):
             passages.append({
                 "id": str(i),
-                "text": chunk
+                "text": chunk["text"]
             })
+            chunk_lookup[str(i)] = chunk
             
         # We package the query and the passages together
         rerankrequest = RerankRequest(query=query, passages=passages)
@@ -36,7 +40,7 @@ class RerankerService:
         # We slice the list to only keep the top_k results.
         top_results = results[:top_k]
         
-        # Extract just the raw text back out to send to the LLM
-        best_chunks = [result["text"] for result in top_results]
+        # Recover the original chunk dictionaries
+        best_chunks = [chunk_lookup[result["id"]] for result in top_results]
         
         return best_chunks

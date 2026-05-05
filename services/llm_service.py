@@ -37,13 +37,18 @@ class LLMService:
         # We use gpt-4o-mini because it is incredibly fast, very cheap, and highly capable for RAG.
         self.model = "gpt-4o-mini"
 
-    async def generate_answer(self, question: str, context_chunks: list[str], conversation_history: list[dict] = None) -> str:
+    async def generate_answer(self, question: str, context_chunks: list[dict], conversation_history: list[dict] = None) -> str:
         """
         Takes the user's question, the context chunks retrieved from Pinecone,
         and the conversation history, and asks the LLM to synthesize a final answer.
         """
-        # We glue all our retrieved chunks together into one massive string, separated by dashes
-        context_text = "\n\n---\n\n".join(context_chunks)
+        # Format the context chunks to include source information
+        formatted_chunks = []
+        for i, doc in enumerate(context_chunks):
+            # We use 1-indexed citations for user-friendliness
+            formatted_chunks.append(f"[Source {i+1}: {doc['filename']}]\n{doc['text']}")
+            
+        context_text = "\n\n---\n\n".join(formatted_chunks)
         
         system_prompt = f"""
         You are a highly intelligent and precise financial analyst AI.
@@ -54,6 +59,10 @@ class LLMService:
         For example: "The provided documents do not specify the exact [metric]. However, the report notes that..."
         
         CRITICAL RULE: Do not use your own outside knowledge. If the context contains absolutely nothing related to the query, state clearly that the document does not contain the information.
+
+        CITATION RULE: You MUST cite your sources inline using the provided Source IDs in brackets. 
+        For example: "The company's revenue grew by 15% [1]." 
+        Only use the numerical ID in brackets, not the filename. Do not write [Source 1], just [1].
         
         CONTEXT:
         {context_text}
@@ -290,7 +299,7 @@ to improve semantic search retrieval. Be concise and factual."""
         
         return contextualized_chunks
 
-    async def grade_context(self, question: str, chunks: list[str]) -> str:
+    async def grade_context(self, question: str, chunks: list[dict]) -> str:
         """
         The Self-RAG Grader. Reads the retrieved chunks alongside the question and
         returns 'sufficient' if they contain enough information to answer,
@@ -298,7 +307,7 @@ to improve semantic search retrieval. Be concise and factual."""
         """
         # We join only the first 3 chunks for grading — reading all 5 is overkill
         # and wastes tokens. If the top 3 are bad, all 5 are bad.
-        context_preview = "\n\n---\n\n".join(chunks[:3])
+        context_preview = "\n\n---\n\n".join([c["text"] for c in chunks[:3]])
 
         system_prompt = """
         You are a strict retrieval quality grader for a financial RAG system.

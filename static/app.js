@@ -20,6 +20,32 @@ const evalDashboard   = document.getElementById('evalDashboard');
 // State
 let conversationHistory = [];
 let testCases = []; // [{question, ground_truth}]
+window.currentSources = []; // Store sources for the current answer
+
+// ─── Source Panel Logic ──────────────────────────────────────────────────────
+const sourcePanel = document.getElementById('sourcePanel');
+const spFilename = document.getElementById('spFilename');
+const spContent = document.getElementById('spContent');
+const spCloseBtn = document.getElementById('spCloseBtn');
+
+if (spCloseBtn) {
+    spCloseBtn.addEventListener('click', () => {
+        sourcePanel.classList.remove('visible');
+        setTimeout(() => sourcePanel.classList.add('hidden'), 350); // wait for transition
+    });
+}
+
+window.openSourcePanel = function(id) {
+    const source = window.currentSources.find(s => s.id === parseInt(id));
+    if (!source) return;
+    
+    spFilename.textContent = source.filename;
+    spContent.textContent = source.text;
+    
+    sourcePanel.classList.remove('hidden');
+    // slight delay to allow display:flex to apply before transitioning right
+    setTimeout(() => sourcePanel.classList.add('visible'), 10);
+};
 
 // ─── Security Helper ─────────────────────────────────────────────────────────
 // Escapes HTML characters to prevent Cross-Site Scripting (XSS) when using innerHTML
@@ -169,9 +195,19 @@ async function submitQuestion() {
         const data = await response.json();
 
         if (response.ok) {
-            updateMessage(thinkingId, data.answer, 'answer');
+            window.currentSources = data.sources || [];
+            
+            // XSS Prevention: Escape the AI's answer first
+            let formattedAnswer = escapeHTML(data.answer);
+            
+            // Regex to replace [1], [2], etc with interactive citation badges
+            formattedAnswer = formattedAnswer.replace(/\[(\d+)\]/g, (match, id) => {
+                return `<a class="citation-badge" onclick="window.openSourcePanel(${id})">[${id}]</a>`;
+            });
+            
+            updateMessage(thinkingId, formattedAnswer, 'answer', true);
 
-            // Update conversation memory
+            // Update conversation memory (store raw answer, not HTML)
             conversationHistory.push({ role: 'user', content: question });
             conversationHistory.push({ role: 'assistant', content: data.answer });
 
@@ -223,12 +259,17 @@ function appendMessage(role, text) {
     return id;
 }
 
-function updateMessage(id, newText, type = 'answer') {
+function updateMessage(id, newText, type = 'answer', isHTML = false) {
     const msgDiv = document.getElementById(id);
     if (!msgDiv) return;
 
     const contentDiv = msgDiv.querySelector('.msg-content');
-    contentDiv.textContent = newText;
+    
+    if (isHTML) {
+        contentDiv.innerHTML = newText;
+    } else {
+        contentDiv.textContent = newText;
+    }
 
     if (type === 'error') {
         contentDiv.classList.add('is-error');
